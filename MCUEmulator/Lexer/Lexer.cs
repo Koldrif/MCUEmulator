@@ -3,25 +3,35 @@
 /*
  * Tokens:
  *   Commands:
+ *     [COMMOV]
  *     - MOV
+ *     [COMSUB}
  *     - SUB
  *     ...
  *   OPERAND:
+ *     [OPREGISTER]
  *     - r.. - регистр
+ *     [OPMEMORY]
  *     - 0x.. - ячейка памяти
+ *     [OPCONSTANT]
  *     - b... \ 
  *     - d... -  константы
  *     - h... /
  *     ...
  *
- *    NEWLINE:
+ *    [NEWLINE]
  *     - \n
  *
- *    EOF:
+ *    [EOF]
  *     - \0
  *
- *    SEPARATOR:
+ *    [SEPARATOR]:
  *     - ,
+ *
+ * TODO
+ *  1. Операнды разбить на токены регистры, ячейка памяти, константа
+ *  2. Запихнуть мапу лексема - регулярка
+ *  
  */
 public class Lexer
 {

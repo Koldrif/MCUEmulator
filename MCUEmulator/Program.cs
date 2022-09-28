@@ -2,6 +2,5 @@
 
 using MCUEmulator;
 
-var arx = new Register();
+var cpu = new Cpu();
 
-Console.WriteLine(arx.ToString());
