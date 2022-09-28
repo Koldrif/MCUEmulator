@@ -41,15 +41,15 @@ public class Register
 
     public void SetRegisterValue(int value)
     {
-        if (value > Math.Pow(2, _bits.Count))
+        if (value >= Math.Pow(2, _bits.Count))
             throw new ArgumentException($"To big value for {_bits.Count} bits");
         // _bits = new BitArray(value);
-        var tmp = fromDecToBin(value);
-        _bits = tmp.resizeUpTo(_bits.Count);
+        var tmp = FromDecToBin(value);
+        _bits = tmp.ResizeUpTo(_bits.Count);
 
     }
 
-    private BitArray fromDecToBin(int value)
+    private static BitArray FromDecToBin(int value)
     {
         List<bool> result = new List<bool>();
         while (value > 0)
@@ -72,7 +72,7 @@ public class Register
 public static class BitArrayExtension
 {
     // Have 0010 need extend upto 8 bits
-    public static BitArray resizeUpTo(this BitArray array, int to)
+    public static BitArray ResizeUpTo(this BitArray array, int to)
     {
         var oldArraySize = array.Count;
         if (oldArraySize > to)

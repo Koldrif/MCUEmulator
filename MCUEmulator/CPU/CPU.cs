@@ -72,7 +72,7 @@ public class Cpu
         for (int i = 0; i < InstructionMemorySize; i++)
         {
             _instractionsMemory.Add( new Register(RegisterSize));
-            _instractionsMemory[i].SetRegisterValue(16);
+            _instractionsMemory[i].SetRegisterValue(0b1_0000_0000);
             _dataMemory.Add(new Register(RegisterSize));
         }
     }
