@@ -1,7 +1,9 @@
 ﻿using System.Collections;
 using System.Text;
+using MCUEmulator.Utility;
 
 namespace MCUEmulator.CPU;
+
 /// <summary>
 /// Class that represents register in CPU with methods that can operate triggers inside 
 /// </summary>
@@ -51,7 +53,7 @@ public class Register
         return builder.ToString();
     }
 
-    public void SetRegisterValue(BitArray value)
+    public void SetValue(BitArray value)
     {
         _bits = value;
     }
@@ -62,7 +64,7 @@ public class Register
     /// <exception cref="ArgumentException">if value bigger then this register size. E.G. if you want to set value
     /// 16 into register with size 3
     /// </exception>
-    public void SetRegisterValue(int value)
+    public void SetValue(int value)
     {
         if (value >= Math.Pow(2, _bits.Count))
             throw new ArgumentException($"To big value for {_bits.Count} bits");
@@ -136,9 +138,6 @@ public class Register
             _bits[^1] = false;
             return tmpTrigger;
         }
-        
-        
-        
     }
     
     /// <summary>
@@ -151,26 +150,3 @@ public class Register
     }
 }
 
-public static class BitArrayExtension
-{
-    // Have 0010 need extend upto 8 bits
-    /// <summary>
-    /// Resizes register
-    /// </summary>
-    /// <param name="to">Expands register to param value</param>
-    /// <returns></returns>
-    /// <exception cref="ArgumentException">You can't decrease size of register</exception>
-    public static BitArray ResizeUpTo(this BitArray array, int to)
-    {
-        var oldArraySize = array.Count;
-        if (oldArraySize > to)
-            throw new ArgumentException($"You can't extend array with size {oldArraySize}, to lower count {to} bits");
-        var newArray = new BitArray(to, false);
-        for (int i = 0; i < oldArraySize; i++)
-        {
-            newArray[^(i + 1)] = array[^(i + 1)];
-        }
-
-        return newArray;
-    }
-}

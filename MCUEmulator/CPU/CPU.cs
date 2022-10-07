@@ -1,10 +1,9 @@
 ﻿using System.Collections;
-using MCUEmulator.CPU;
 
-namespace MCUEmulator;
+namespace MCUEmulator.CPU;
 
 //TODO Make it singleton!
-public class Cpu
+public sealed class CPU
 {
     /// <summary>
     /// Describes how many registers will Instruction and Data memory will contain
@@ -27,10 +26,22 @@ public class Cpu
     /// </summary>
     private static List<Register> _dataMemory = new(InstructionMemorySize);
 
+    public static List<Register> InstractionsMemory
+    {
+        get => _instractionsMemory;
+        set => _instractionsMemory = value ?? throw new ArgumentNullException(nameof(value));
+    }
+
+    public List<Register> DataMemory
+    {
+        get => _dataMemory;
+        set => _dataMemory = value ?? throw new ArgumentNullException(nameof(value));
+    }
+
     /// <summary>
     /// Map that connects registers names with their <inheritdoc cref="_dataMemory"/> and address in it  
     /// </summary>
-    private Dictionary<string, (List<Register>, int)> _ronNameAssociations = new Dictionary<string, (List<Register>, int)>
+    private readonly Dictionary<string, (List<Register>, int)> _ronNameAssociations = new Dictionary<string, (List<Register>, int)>
     {
         {"rax", (_dataMemory, 0)}, // 0000 0000 | 0x00 
         {"rbx", (_dataMemory, 1)}, // 0000 0001 | 0x01
@@ -40,13 +51,29 @@ public class Cpu
         {"flx", (_dataMemory, 5)}, // 0000 0101 | 0x05
         {"fmx", (_dataMemory, 6)}, // 0000 0110 | 0x06
     };
+
+    public Dictionary<string, (List<Register>, int)> RonNameAssociations => _ronNameAssociations;
+
+    private static CPU _cpu = null;
+
+    public static CPU Cpu
+    {
+        get
+        {
+            if (_cpu is null)
+            {
+                _cpu = new CPU();
+            }
+
+            return _cpu;
+        }
+    }
     
-    public Cpu()
+    private CPU()
     {
         InitializeMemories();
         // PrintMemory(_instructionsMemory);
         // PrintMemory(_dataMemory);
-        PrintMemories((new List<IList<Register>>{ _instractionsMemory, _dataMemory }));
     }
     /// <summary>
     /// Prints register of given registers 
@@ -95,7 +122,7 @@ public class Cpu
         for (int i = 0; i < InstructionMemorySize; i++)
         {
             _instractionsMemory.Add( new Register(RegisterSize));
-            _instractionsMemory[i].SetRegisterValue(0b1_0000_0000);
+            _instractionsMemory[i].SetValue(0);
             _dataMemory.Add(new Register(RegisterSize));
         }
     }
@@ -112,7 +139,7 @@ public class Cpu
         else
         {
             var register = GetRegisterByName(registerName);
-            register.SetRegisterValue(value);
+            register.SetValue(value);
         }
     }
     
@@ -122,7 +149,7 @@ public class Cpu
     /// <param name="registerName">name of register</param>
     /// <returns></returns>
     /// <exception cref="ArgumentException">if name of register doesn't exist</exception>
-    private Register GetRegisterByName(string registerName)
+    public Register GetRegisterByName(string registerName)
     {
         if (_ronNameAssociations.ContainsKey(registerName))
         {
@@ -142,9 +169,15 @@ public class Cpu
     /// <param name="memory">where to search register</param>
     /// <param name="address">Register address</param>
     /// <returns></returns>
-    private Register GetRegisterByAddress(List<Register> memory, int address)
+    public Register GetRegisterByAddress(List<Register> memory, int address)
     {
         return memory[address];
+    }
+
+    public void ToConsole()
+    {
+        PrintMemories((new List<IList<Register>>{ _instractionsMemory, _dataMemory }));
+
     }
     
     
