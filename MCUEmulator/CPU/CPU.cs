@@ -40,7 +40,7 @@ public class Cpu
         {"flx", (_dataMemory, 5)}, // 0000 0101 | 0x05
         {"fmx", (_dataMemory, 6)}, // 0000 0110 | 0x06
     };
-
+    
     public Cpu()
     {
         InitializeMemories();
@@ -146,4 +146,6 @@ public class Cpu
     {
         return memory[address];
     }
+    
+    
 }
