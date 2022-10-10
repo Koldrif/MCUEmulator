@@ -9,15 +9,17 @@ public class LexerLang
     {
         avalibleTerminals = new List<Terminal>()
         {
-            new Terminal("COMMAND",@"^\w*m\w*$"),
-            new Terminal("DIGIT", "^0|([1-9][0-9]*)$"),
-            new Terminal("COM", "^,$"),
-            new Terminal("COMMA", "^;$"),
+            //TODO Постараться избавиться от захардкоженных комманд 
+            new Terminal("COMMAND",@"^[\S\D]{3,6}\s+"),
+            new Terminal("DIGIT", @"\d+[\s;]"),
+            // For hex 0x[\da-fA-F]+ 
+            new Terminal("COM", @"\,"),
+            new Terminal("COMMA", @"\;"),
             /*new Terminal("L_SB", "^[$"),
             new Terminal("R_SB", "^]$")*/
-            new Terminal("REGISTER", "^A|B$"),
+            new Terminal("REGISTER", @"[\D\S]{1}rx\s?"),
             //пробел для парсера
-            new Terminal("CH_SPACE", "^ $")
+            new Terminal("CH_SPACE", @"\s")
         };
     }
     /// <summary>
@@ -36,7 +38,7 @@ public class LexerLang
     
     public virtual List<Token> SearchTokens(StreamReader input)
     {
-        if (input == null)
+        if (input is null)
             throw new ArgumentNullException("BufferedStream input = null");
         List<Token> output = new List<Token>(); // Сюда запишем вывод.
         StringBuilder bufferList = new StringBuilder(); // Строка из файла.
