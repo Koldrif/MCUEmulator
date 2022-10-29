@@ -1,14 +1,25 @@
 Терминалы
-COMMAND -> "^MOV | ADD | SUB | MUL | DIV | INC | DEC | BT | BTR | BTS | CMP$"		//команда
-
-
+COMMAND_MOV -> "MOV"
+COMMAND_ADD -> "ADD"
+COMMAND_SUB -> "SUB"
+COMMAND_MUL -> "MUL"
+COMMAND_DIV -> "DIV"
+COMMAND_INC -> "INC"
+COMMAND_DEC -> "DEC"
+COMMAND_COMPARE -> "CMP"
+COMMAND_CMPXCHG -> "CMPXCHG"
+COMMAND_JMP -> "JMP"
+COMMAND_JTCMP -> "JTCMP"
+COMMAND_BT -> "BT"
+COMMAND_BTR -> "BTR"
+COMMAND_BTS -> "BTS"
 
 DIGIT -> "^ 0 | ([1-9]{1}[0-9]*)$"	//числа
-COM -> "^,$"				//запятая
-COMMA -> "^;$"				//завершение команды
-CH_SPACE -> "^ $"			//пробел
-L_SB -> "^[$"				//левая квадратная скобка
-R_SB -> "^]$"				//правая квадратная скобка
+COM -> ","				//запятая
+COMMA -> ";"				//завершение команды
+CH_SPACE -> " "			//пробел
+L_SB -> "\\["				//левая квадратная скобка
+R_SB -> "\\]"				//правая квадратная скобка
 
 
 MOV ax, [5]
