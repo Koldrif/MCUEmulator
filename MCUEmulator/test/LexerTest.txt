@@ -1,1 +1,1 @@
-﻿MOV A, B;
+﻿mov A, B;

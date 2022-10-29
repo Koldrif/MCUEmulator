@@ -1,132 +1,221 @@
 ﻿using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks.Dataflow;
 
-namespace MCUEmulator.Lexer;
 
-public class LexerLang
+namespace MCUEmulator.Lexer
 {
-    public LexerLang()
+    public class LexerLang
     {
-        avalibleTerminals = new List<Terminal>()
+        /// <summary>
+        /// Создание экземпляра обработчика.
+        /// </summary>
+        public LexerLang()
         {
-            //TODO Постараться избавиться от захардкоженных комманд 
-            new Terminal("COMMAND",@"^[\S\D]{3,6}\s+"),
-            new Terminal("DIGIT", @"\d+[\s;]"),
-            // For hex 0x[\da-fA-F]+ 
-            new Terminal("COM", @"\,"),
-            new Terminal("COMMA", @"\;"),
-            /*new Terminal("L_SB", "^[$"),
-            new Terminal("R_SB", "^]$")*/
-            new Terminal("REGISTER", @"[\D\S]{1}rx\s?"),
-            //пробел для парсера
-            new Terminal("CH_SPACE", @"\s")
-        };
-    }
-    /// <summary>
-    /// Список поддерживаемых терминалов
-    /// </summary>
-    public readonly List<Terminal> avalibleTerminals;
-
-    /// <summary>
-    /// Создание экземпляра обработчика.
-    /// </summary>
-    /// <param name="avalibleTerminals">Набор разрешённых терминалов.</param>
-    public LexerLang(IEnumerable<Terminal> avalibleTerminals)
-    {
-        this.avalibleTerminals = new List<Terminal>(avalibleTerminals ?? throw new ArgumentNullException());
-    }
-    
-    public virtual List<Token> SearchTokens(StreamReader input)
-    {
-        if (input is null)
-            throw new ArgumentNullException("BufferedStream input = null");
-        List<Token> output = new List<Token>(); // Сюда запишем вывод.
-        StringBuilder bufferList = new StringBuilder(); // Строка из файла.
-        char[] buffer = new char[1]; // Сюда попадает символ перед тем, как попасть в строку.
-        List<Terminal> termsFound; // Сюда помещаются подходящие терминалы к строке bufferList.
-
-        // True, если последняя итерация была с добавлением элемента в output. Иначе - False.
-        bool lastAdd = false;
-        while (!input.EndOfStream || bufferList.Length != 0)
-        {
-            if (!lastAdd && !input.EndOfStream)
+            avalibleTerminals = new List<Terminal>(
+            new Terminal[]
             {
-                input.Read(buffer, 0, 1); // Чтение символа.
-                bufferList.Append(buffer[0]); // Запись символа в строку.
+                new Terminal("COMMAND_MOV", "MOV"),     //Пересылка данных
+                new Terminal("COMMAND_ADD", "ADD"),     //Сложение
+                new Terminal("COMMAND_SUB", "SUB"),     //Вычитание
+                new Terminal("COMMAND_MUL", "MUL"),     //Умножение
+                new Terminal("COMMAND_DIV", "DIV"),     //Деление
+                new Terminal("COMMAND_INC", "INC"),     //Инкремент на 1
+                new Terminal("COMMAND_DEC", "DEC"),     //Декремент на 1
+                new Terminal("COMMAND_COMPARE", "CMP"),     //Сравнение двух операндов
+                new Terminal("COMMAND_CMPXCHG", "CMPXCHG"), //Сравнение и обмен
+                new Terminal("COMMAND_JMP", "JMP"),         //Переход
+                new Terminal("COMMAND_JTCMP", "JTCMP"),     //Переход с условием
+                new Terminal("COMMAND_BT", "BT"),           //Проверка бита
+                new Terminal("COMMAND_BTR", "BTR"),         //Проверка бита и сброс в 0
+                new Terminal("COMMAND_BTS", "BTS"),         //Проверка бита и устновка в 1
+                new Terminal("REG", @"[\D\S]{1}rx\s?"),     //Регистры
+                
+                //терминалы для парсера
+                new Terminal("COM", ","),
+                new Terminal("COMMA", ";"),
+                new Terminal("L_SB", "\\["),
+                new Terminal("R_SB", "\\]"),
+                new Terminal("CH_SPACE", " ")
             }
-            lastAdd = false;
-            // Получение списка подходящих терминалов:
-            termsFound = SearchInTerminals(bufferList.ToString());
+            );
+        }
 
-            // Ура, мы что-то, кажется, нашли.
-            if (termsFound.Count <= 1 || input.EndOfStream)
+        public void Run(List<string> args)
+        {
+            line = 0;
+            for (int i = 1; i < args.Count; ++i)
             {
-                if (termsFound.Count == 1 && !input.EndOfStream)
-                    // Это ещё не конец файла и есть 1 прецидент. Ищем дальше.
-                    continue;
-                int last = char.MaxValue + 1;
-                if (termsFound.Count == 0)
+                string input = args[i];
+                while (input != "")
                 {
-                    last = bufferList[bufferList.Length - 1]; // Запоминаем последний символ.
-                    bufferList.Length--; // Уменьшаем длинну списка на 1.
-                    termsFound = SearchInTerminals(bufferList.ToString()); // Теперь ищем терминалы.
-                }
-                if (termsFound.Count != 1) // Ой, должен был остаться только один.
-                {
-                    if (termsFound.Count == 0)
-                        throw new LexerException
-                        ($"Количество подходящих терменалов не равно 1: {termsFound.Count}. Последние удачные: {string.Join(", ", output)}");
-                    Terminal need = termsFound.First();
-                    Terminal oldNeed = null;
-                    bool unical = true; // True, если необходимый терминал имеет самый высокий приоритет.
-                    for (int i = 1; i < termsFound.Count; i++)
+                    if (input[0] == '\n')
                     {
-                        if (termsFound[i] > need)
-                        {
-                            need = termsFound[i];
-                            unical = true;
-                        }
-                        else if (Terminal.PriorityEquals(termsFound[i], need))
-                        {
-                            oldNeed = termsFound[i];
-                            unical = false;
-                        }
+                        ++line;
                     }
-                    if (!unical)
-                        throw new LexerException
-                            ($"Количество подходящих терменалов не равно 1: {termsFound.Count}" +
-                            $", возможно был конфликт между: {oldNeed} и {need}");
-                    termsFound.Clear();
-                    termsFound.Add(need);
+
+                    Token token = NextToken(input);
+                    tokens.Insert(tokens.Count, token);
+                    Console.WriteLine(token);
+                    input = input.Substring(token.Value.Length, input.Length);
                 }
-                // Всё идёт как надо
-                // Добавим в результаты
-                output.Add(
-                    new Token(
-                    termsFound.First(),
-                    bufferList.ToString()
-                    ));
-                bufferList.Clear();
-                lastAdd = true;
-                if (last != char.MaxValue + 1)
-                    bufferList.Append((char)last);
             }
-        }
-        return output;
-    }
 
-    public List<Terminal> SearchInTerminals(string expression)
-    {
-        List<Terminal> output = new List<Terminal>();
-        foreach (Terminal ter in avalibleTerminals)
+            Terminal term = new Terminal("EOF", "");
+            Token tok = new Token(term, new string(""));
+            tokens.Insert(tokens.Count, tok);
+        }
+
+        public void RunFile()
         {
-            Match mat = ter.RegularExpression.Match(expression);
-            if (mat.Length > 0 && mat.Value.Equals(expression))
+            StreamReader sr = new StreamReader("LexerTest.txt");
+            line = 0;
+            string? buffer = new string("");
+            List<string?> lines = new List<string?>();
+            string? strLine;
+            while ((strLine = sr.ReadLine()) != null)
             {
-                output.Add(ter);
+                //buffer = sr.ReadLine();
+                lines.Add(strLine);
+            }
+
+            for (int i = 0; i < lines.Count; ++i)
+            {
+                string input = new string(lines[i]);
+                while (input != "")
+                {
+                    while (input[0] == '\n')
+                    {
+                        ++line;
+                    }
+                    Token token = NextToken(input);
+                    tokens.Add(token);
+                    input = input.Substring(token.Value.Length);
+                }
+
+                line++;
+            }
+            Terminal term = new Terminal("EOF", "");
+            Token tok = new Token(term, new string(""));
+            tokens.Insert(tokens.Count, tok);
+            
+            Print(tokens);
+        }
+        
+        /// <summary>
+        /// Поиск токена
+        /// </summary>
+        /// <param name="avalibleTerminals">Набор разрешённых терминалов.</param>
+        public Token NextToken(string input)
+        {
+            string buffer = new string("");
+            buffer += input[0];
+            try
+            {
+                while (!TerminalMatches(buffer))
+                {
+                    while (!TerminalMatches(buffer) && buffer.Length != input.Length)
+                    {
+                        buffer+=input[buffer.Length];
+                    }
+
+                    if (buffer.Length != input.Length || !TerminalMatches(buffer))
+                        buffer.Remove(buffer.Length-1, 1);
+                    
+                    if (!TerminalMatches(buffer))
+                    {
+                        throw new LexerException($"Неизвестный символ в строке {line.ToString()} Последние удачные: {string.Join(", ", tokens)}");
+                    }
+                    List<Terminal> terminal = SearchInTerminals(buffer);
+                    Token tok = new Token(GetTerminal(terminal), buffer);
+                    return tok;
+                }
+
+                if (TerminalMatches(buffer))
+                {
+                    List<Terminal> terminal = SearchInTerminals(buffer);
+                    Token tok = new Token(GetTerminal(terminal), buffer);
+                    return tok;
+                }
+                else
+                {
+                    throw new LexerException($"Неизвестный символ в строке {line.ToString()} Последние удачные: {string.Join(", ", tokens)}");
+                }
+            }
+            catch(LexerException e)
+            {
+                Console.WriteLine(e + "\n" + e.StackTrace);
+            }
+
+            return null!;
+        }
+        /// <summary>
+        /// Вывод
+        /// </summary>
+        /// <param name="tokens"></param>
+        void Print(List<Token> tokens)
+        {
+            Console.WriteLine("Lexer: success\n\nTokens:\n");
+            foreach (var VARIABLE in tokens)
+            {
+                Console.WriteLine(VARIABLE.ToString());
             }
         }
+        
+        /// <summary>
+        /// Терминал
+        /// </summary>
+        /// <param name="terminals"></param>
+        /// <returns>Терминал</returns>
+        Terminal GetTerminal(List<Terminal> terminals)
+        {
+            return terminals[0];
+        }
+        
+        /// <summary>
+        /// Поиск Терминала
+        /// </summary>
+        /// <param name="expression">Выражение терминала</param>
+        /// <returns>Найденный терминал</returns>
+        public List<Terminal> SearchInTerminals(string expression)
+        {
+            List<Terminal> matched = new List<Terminal>();
+            foreach (Terminal ter in avalibleTerminals)
+            {
+                if (ter.Matches(expression))
+                {
+                    matched.Add(ter);
+                }
+            }
 
-        return output;
+            return matched;
+        }
+        
+        /// <summary>
+        /// Терминал найден
+        /// </summary>
+        /// <param name="expression"></param>
+        /// <returns>true - если найден, false - если нет</returns>
+        public bool TerminalMatches(string expression)
+        {
+            return SearchInTerminals(expression).Count != 0;
+        }
+        
+        /// <summary>
+        /// Список поддерживаемых терминалов.
+        /// </summary>
+        private readonly List<Terminal> avalibleTerminals;
+
+        /// <summary>
+        /// Номер строки
+        /// </summary>
+        private int line;
+
+        /// <summary>
+        /// Список токенов
+        /// </summary>
+        public List<Token> tokens = new();
+        
     }
 }
+
