@@ -29,11 +29,14 @@ namespace MCUEmulator.Lexer
                 new Terminal("COMMAND_BT", "BT"),           //Проверка бита
                 new Terminal("COMMAND_BTR", "BTR"),         //Проверка бита и сброс в 0
                 new Terminal("COMMAND_BTS", "BTS"),         //Проверка бита и устновка в 1
-                new Terminal("REG", @"[\D\S]{1}rx\s?"),     //Регистры
+                new Terminal("REG", @"[\D\S]{2}x\s?"),      //Регистры
+                new Terminal("INDEX_SOURCE", "ESI"),        //Регистры
+                new Terminal("LABEL", @"\#[\D\S]*[0-9]"),  //Метка?
                 
                 //терминалы для парсера
                 new Terminal("COM", ","),
                 new Terminal("COMMA", ";"),
+                new Terminal("COLON", ":"),
                 new Terminal("L_SB", "\\["),
                 new Terminal("R_SB", "\\]"),
                 new Terminal("CH_SPACE", " ")
